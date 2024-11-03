@@ -1,17 +1,21 @@
-FROM python:3.10
-ENV UV_COMPILE_BYTECODE=1
+# Base
+FROM python:3.11
 
-ENV PROJECT_NAME=HOLA
-ENV POSTGRES_SERVER=123
-ENV POSTGRES_USER=123
-ENV FIRST_SUPERUSER=123
-ENV FIRST_SUPERUSER_PASSWORD=1232
-ENV UV_LINK_MODE=copy
+ENV DB_HOST=aws-0-us-west-1.pooler.supabase.com
+ENV DB_NAME=postgres
+ENV DB_USER=postgres.vzvrmhhqiwyntaftiveh
+ENV DB_PASS=Hello02630.by3
+ENV DB_PORT=6543
 
+# Set working diretory
 WORKDIR /code
+
+# copy requirements.txt and install
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+# Copy FastAPI application
 COPY ./app /code/app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-
+# Set command to run the application
+CMD ["uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "8000"]

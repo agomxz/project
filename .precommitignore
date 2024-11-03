@@ -1,0 +1,3 @@
+# .precommitignore
+env/
+migrations/*
