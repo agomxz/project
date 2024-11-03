@@ -4,15 +4,14 @@ from typing import Any, Dict
 from sqlalchemy.orm import Session
 
 from app.config import config
-from app.models.user_service import User, TaskAssigments, TaskNotes
-
-from app.schemas.user import UserCreate
+from app.models.user_service import Tasks, TaskAssigments, TaskNotes
+from app.schemas.task import TaskBase
 from sqlalchemy import delete
 
 logger = config.logger
 
 
-def create_task(db: Session, obj_in: UserCreate) -> Dict[str, Any]:
+def create(db: Session, obj_in: TaskBase) -> Dict[str, Any]:
     """
     Create Task
     - **obj_in**: Task object
@@ -22,29 +21,28 @@ def create_task(db: Session, obj_in: UserCreate) -> Dict[str, Any]:
 
     """
     try:
-        date_created = datetime.now().strftime("%Y-%m-%d")
+        date_created = datetime.now().strftime("%d/%m/%Y")
 
-        db_obj = User(
-            user_name=obj_in.user_name,
-            email=obj_in.email,
-            first_name=obj_in.first_name,
-            last_name=obj_in.last_name,
-            mobile=obj_in.mobile,
+        db_obj = Tasks(
+            title=obj_in.title,
+            details=obj_in.details,
+            completed=obj_in.completed,
+            date_created=obj_in.date_created,
         )
 
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
 
-        result = {"email": obj_in.email, "created_at": date_created}
+        result = {"title": obj_in.title, "created_at": date_created}
 
         return result
     except Exception as e:
         logger.error(e)
-        raise Exception("Failed to create user")
+        raise Exception("Failed to create task")
 
 
-def get_by_id(db: Session, user_id: int):
+def get_by_id(db: Session, task_id: int):
     """
     Get Task By Id
     - **user_id**: User id
@@ -54,7 +52,7 @@ def get_by_id(db: Session, user_id: int):
 
     """
     try:
-        user = db.query(User).filter(User.id == user_id).first()
+        user = db.query(Tasks).filter(Tasks.id == task_id).first()
         return user
     except Exception as e:
         logger.error(e)

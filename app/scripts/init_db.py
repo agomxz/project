@@ -86,13 +86,20 @@ def main() -> None:
                         list_notes.append(new_note)
 
             db.insert_objects(list_address)
+            db.alter_sequence("address_id_seq", len(list_address))
             logger.info("Address created")
+
             db.insert_objects(list_users)
+            db.alter_sequence("user_id_seq", len(list_users))
             logger.info("Users created")
+
             db.insert_objects(list_tasks)
+            db.alter_sequence("task_id_seq", len(list_tasks))
             logger.info("Tasks created")
+
             db.insert_objects(list_assigments)
             logger.info("Tasks Assigments created")
+
             db.insert_objects(list_notes)
             logger.info("Tasks Notes created")
 

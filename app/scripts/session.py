@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -25,6 +25,20 @@ class Database:
             print(f"Error inserting objects: {e}")
         finally:
             session.close()
+
+    def alter_sequence(self, name_seq, num):
+        session = self.get_session()
+        try:
+            session.execute(text(f"ALTER SEQUENCE {name_seq} RESTART WITH {num+1};"))
+            session.commit()
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error sequence: {e}")
+        finally:
+            session.close()
+
+        return None
 
     def execute_query(self, query_function):
         session = self.get_session()
