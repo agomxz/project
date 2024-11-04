@@ -1,16 +1,16 @@
-from typing import Optional, TypedDict
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
     user_name: str
-    email: Optional[EmailStr | None]
-    first_name: Optional[str]
-    last_name: Optional[str]
-    mobile: Optional[str]
+    email: EmailStr
+    first_name: str
+    last_name: str
+    mobile: str
 
 
-class Address(TypedDict):
+class AddressBase(BaseModel):
     street: str
     city: str
     state: str
@@ -18,7 +18,11 @@ class Address(TypedDict):
 
 
 class UserCreate(UserBase):
-    address: Address
+    address: AddressBase
+
+
+class Address(UserBase):
+    address_id: int
 
 
 class User(UserBase):

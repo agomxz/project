@@ -138,6 +138,22 @@ def get_by_username(db: Session, username: str) -> Optional[UserSchema]:
         raise Exception("Failed to get user by username")
 
 
+def get_by_mobile(db: Session, mobile: str) -> Optional[UserSchema]:
+    """
+    Get User By Mobile
+
+    - **username**: User mobile
+
+    Returns:
+        - **user**: User object
+    """
+    try:
+        return db.query(User).filter(User.mobile == mobile).first()
+    except Exception as e:
+        logger.error(e)
+        raise Exception("Failed to get user by mobile")
+
+
 def user_put(db: Session, user_id: int, user: UserUpdatePut) -> Any:
     """
     Update User

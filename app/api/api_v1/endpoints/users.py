@@ -7,6 +7,7 @@ from app.config import config
 from app.db.session import get_db
 from app.crud import crud_user
 from app.crud import crud_task
+from app.crud import crud_address
 
 from pydantic import ValidationError
 from app.schemas.user import UserCreate, UserUpdatePatch, UserUpdatePut
@@ -16,7 +17,7 @@ logger = config.logger
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_users(user_obj: UserCreate, db: Session = Depends(get_db)) -> Any:
+def create_user(user_obj: UserCreate, db: Session = Depends(get_db)) -> Any:
     """
     Create User
 
@@ -24,24 +25,46 @@ def create_users(user_obj: UserCreate, db: Session = Depends(get_db)) -> Any:
 
     Returns:
         - **user**: User object
-        - **400**: User (email) already exists
+        - **400**: User (email, username, phone number) already exists
         - **400**: Invalid input
         - **500**: An error occurred while creating the user
 
     """
     try:
         user_exist = None
-        if user_obj.email:
-            user_exist = crud_user.get_by_email(db, user_obj.email)
+        user_exist = crud_user.get_by_email(db, user_obj.email)
+
+        username_exists = None
+        username_exists = crud_user.get_by_username(db, user_obj.user_name)
+
+        mobile_exists = None
+        mobile_exists = crud_user.get_by_mobile(db, user_obj.mobile)
+
         if user_exist:
             logger.warning("User already exists.")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="User already exists.",
+                detail="User email already exists.",
             )
+
+        elif username_exists:
+            logger.warning("Username already exists.")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already exists.",
+            )
+
+        elif mobile_exists:
+            logger.warning("Mobile already exists.")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Mobile already exists.",
+            )
+
         else:
             new_user = crud_user.create_user(db, user_obj)
-            # new_address = crud_address.create_address(db, user_obj['address'])
+            crud_address.create(db, user_obj.address)
+
             return new_user
 
     except ValidationError as e:
@@ -62,7 +85,7 @@ def create_users(user_obj: UserCreate, db: Session = Depends(get_db)) -> Any:
 
 
 @router.get("/{user_id}", status_code=status.HTTP_201_CREATED)
-def create_user(user_id: int, db: Session = Depends(get_db)) -> Any:
+def get_user(user_id: int, db: Session = Depends(get_db)) -> Any:
     """
     Fetch User
 
