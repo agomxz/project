@@ -15,7 +15,7 @@ class Config:
     """
 
     logger = logging.getLogger()
-    PROJECT_NAME = "USERS PROJECT"
+    PROJECT_NAME = "Transactions Project"
 
     def __init__(self):
         self.load_env()
@@ -61,20 +61,6 @@ class Config:
             self.logger.error(
                 "Incomplete database configuration."
                 "Please check environment variables."
-            )
-
-    def load_twilio_variables(self) -> None:
-        self.twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-        self.twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-
-        if not all(
-            [
-                self.twilio_account_sid,
-                self.twilio_auth_token,
-            ]
-        ):
-            self.logger.warning(
-                "Incomplete twilio configuration." "Please check environment variables."
             )
 
 

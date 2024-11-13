@@ -6,6 +6,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Float,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.session import Base
@@ -27,6 +28,18 @@ class User(Base):
     last_name = Column(String)
     mobile = Column(String, unique=True)
     address_id = Column(Integer, ForeignKey("address.id"), unique=True, index=True)
+    transaction_id = Column(
+        Integer, ForeignKey("transaction.id"), unique=True, index=True
+    )
+
+
+class Transaction(Base):
+    __tablename__ = "transaction"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(DateTime, nullable=False)
+    amount = Column(Float, nullable=False)
+    type = Column(String)
 
 
 class Address(Base):

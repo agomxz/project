@@ -1,238 +1,77 @@
 from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import File, UploadFile
+import io
+import pandas as pd
+from app.models.user_service import Transaction
 from sqlalchemy.orm import Session
-
+from datetime import datetime
 from app.config import config
 from app.db.session import get_db
-from app.crud import crud_user
-from app.crud import crud_task
-from app.crud import crud_address
-
+from app.crud import crud_transaction
 from pydantic import ValidationError
-from app.schemas.user import UserCreate, UserUpdatePatch, UserUpdatePut
 
 router = APIRouter()
 logger = config.logger
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-def create_user(user_obj: UserCreate, db: Session = Depends(get_db)) -> Any:
+@router.post("/load", status_code=status.HTTP_201_CREATED)
+async def upload_csv(
+    file: UploadFile = File(...), db: Session = Depends(get_db)
+) -> Any:
     """
-    Create User
+    Args:
+        file (UploadFile, optional): _description_. Defaults to File(...).
 
-    - **new_user**: User object
+    Raises:
+        HTTPException: _description_
+        HTTPException: _description_
 
     Returns:
-        - **user**: User object
-        - **400**: User (email, username, phone number) already exists
-        - **400**: Invalid input
-        - **500**: An error occurred while creating the user
-
+        Any: _description_
     """
     try:
-        user_exist = None
-        user_exist = crud_user.get_by_email(db, user_obj.email)
+        contents = await file.read()
+        data = io.StringIO(contents.decode("utf-8"))
 
-        username_exists = None
-        username_exists = crud_user.get_by_username(db, user_obj.user_name)
+        df = pd.read_csv(data)
 
-        mobile_exists = None
-        mobile_exists = crud_user.get_by_mobile(db, user_obj.mobile)
+        data = df[["date", "transaction"]]
+        date_format = "%m/%d/%Y"
+        here = data.iterrows()
 
-        if user_exist:
-            logger.warning("User already exists.")
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User email already exists.",
-            )
+        list_transactions = []
 
-        elif username_exists:
-            logger.warning("Username already exists.")
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Username already exists.",
-            )
+        for index, row in here:
+            print(index)
+            print(row)
+            new_date = datetime.strptime(row[0], date_format)
 
-        elif mobile_exists:
-            logger.warning("Mobile already exists.")
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Mobile already exists.",
-            )
+            type = "debit" if float(row[1]) < 0 else "credit"
 
-        else:
-            new_user = crud_user.create_user(db, user_obj)
-            crud_address.create(db, user_obj.address)
+            new_obj = Transaction(date=new_date, amount=float(row[1]), type=type)
+            list_transactions.append(new_obj)
 
-            return new_user
+        return crud_transaction.create(db, list_transactions)
 
     except ValidationError as e:
-        logger.error(f"Invalid input: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid input: {e}",
         )
     except HTTPException as e:
-        logger.warning(f"HTTPException: {e}")
+        logger.info(e)
         raise
     except Exception as e:
-        logger.error(f"Error creating user: {e}")
+        logger.info(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while creating the user.",
+            detail="An error occurred while loading the file.",
         )
 
 
-@router.get("/{user_id}", status_code=status.HTTP_201_CREATED)
-def get_user(user_id: int, db: Session = Depends(get_db)) -> Any:
-    """
-    Fetch User
+@router.get("/summary", status_code=status.HTTP_200_OK)
+def get_summary(db: Session = Depends(get_db)) -> dict:
+    summary = crud_transaction.get_summary(db)
 
-    - **user_id**: int
-
-    Returns:
-        - **user**: User object
-        - **500**: An error occurred while creating the user
-
-    """
-    try:
-        user = crud_user.get_by_id(db, user_id)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
-            )
-
-        user_dict = user.__dict__.copy()
-
-        return user_dict
-
-    except HTTPException as e:
-        logger.warning(f"HTTPException: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Error getting user by id: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while getting user by id.",
-        )
-
-
-@router.get("/user-tasks/{user_id}", status_code=status.HTTP_200_OK)
-def user_tasks(user_id: int, db: Session = Depends(get_db)) -> Any:
-    user = crud_user.get_by_id(db, user_id)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
-        )
-
-    data = crud_user.get_user_tasks(db, user_id)
-
-    return data
-
-
-@router.put("/{user_id}", status_code=status.HTTP_201_CREATED)
-def put_user(
-    user_id: int, user_obj: UserUpdatePut, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Update User
-    - **new_user**: User object
-
-    Returns:
-        - **user**: User object
-        - **400**: Invalid input
-        - **500**: An error occurred while creating the user
-
-    """
-    try:
-        if crud_user.get_by_id(db, user_id) is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
-            )
-
-        if crud_user.get_by_email(db, user_obj.email) is not None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Email already exists."
-            )
-
-        return crud_user.user_put(db, user_id, user_obj)
-
-    except HTTPException as e:
-        logger.warning(f"HTTPException: {e}")
-        raise
-
-    except Exception as e:
-        logger.error(f"Error updating user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An error occurred while updating user.",
-        )
-
-
-@router.patch("/{user_id}", status_code=status.HTTP_201_CREATED)
-def patch_user(
-    user_id: int, user_obj: UserUpdatePatch, db: Session = Depends(get_db)
-) -> Any:
-    """
-    Update User
-
-    - **new_user**: User object
-
-    Returns:
-        - **user**: User object
-        - **400**: Invalid input
-        - **500**: An error occurred while creating the user
-
-    """
-    try:
-        if crud_user.get_by_id(db, user_id) is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
-            )
-
-        if crud_user.get_by_email(db, user_obj.email) is not None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Email already exists."
-            )
-
-        return crud_user.user_patch(db, user_id, user_obj)
-
-    except HTTPException as e:
-        logger.warning(f"HTTPException: {e}")
-        raise
-
-    except Exception as e:
-        logger.error(f"Error updating user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An error occurred while updating user.",
-        )
-
-
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
-def delete_user(user_id: int, db: Session = Depends(get_db)) -> dict:
-    """
-    Delete User
-
-    - **user_id**: int
-
-    Returns:
-        - **user**: User object
-        - **500**: An error occurred while deleting the user
-    """
-    try:
-        crud_task.delete_assigments(db, user_id)
-        crud_task.delete_notes(db, user_id)
-        crud_user.delete_user(db, user_id)
-        return {"user_id": user_id}
-
-    except HTTPException as e:
-        logger.warning(f"HTTPException: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Error deleteing user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while deleting the user.",
-        )
+    return {"credit": summary[0][0], "debit": summary[1][0]}

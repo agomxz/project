@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Float,
     String,
 )
 
@@ -45,6 +46,16 @@ class Address(Base):
     city = Column(String, nullable=False)
     state = Column(String, nullable=False)
     zip = Column(String, nullable=False)
+
+
+@dataclass
+class Transaction(Base):
+    __tablename__ = "transaction"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(DateTime, nullable=False)
+    amount = Column(Float, nullable=False)
+    type = Column(String)
 
 
 @dataclass
