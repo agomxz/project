@@ -1,9 +1,9 @@
-# Users
+# Service
+This service is dedicated to handling the csv file in order to store it into a database.
 
-Welcome to "Core Traxi Users". This service is dedicated to handling user-related actions for Traxi projects.
+## Working
 
-The service is built based on the [Core fastAPI MS Template](git@github.com:Traxi-on/core_template_fastAPI_MS.git). For comprehensive technical details, instructions on how to run, deploy, and any other related considerations, please refer to the documentation provided in the [template repository](git@github.com:Traxi-on/core_template_fastAPI_MS.git).
-
+https://project-production-8a47.up.railway.app/docs
 
 ## Setup
 1. **Clone the repository:**
@@ -33,25 +33,21 @@ The service is built based on the [Core fastAPI MS Template](git@github.com:Trax
 
 Alternatively, you can run the service using Docker. Build the Docker image using:
 ```sh
-docker build -t users .
+docker build -t transactions .
 ```
 
 And run it with:
 ```sh
-docker run -p 8000:8000 users
+docker run -p 8000:8000 transactions
 ```
 ## API
 
-The service provides a RESTful API with endpoints for managing users and permissions. The API is versioned and the current version is v1. The base URL for the API is `/api/v1`.
-
-Here are some of the available endpoints:
-
-- `users`: GET, POST, PUT, DELETE operations for users.
+The service provides a RESTful API with endpoints. The API is versioned and the current version is v1. The base URL for the API is `/api/v1`.
 
 
 
-## Possibilities with Users Service
+## Possibilities with Service
 
 Service users is a versatile service that can be used for a variety of user management tasks. Here are some possibilities:
 
-- **User Management**: Create, update, delete, and retrieve users.
+- **Transactions Management**: Uploas csv file, Get Summary
