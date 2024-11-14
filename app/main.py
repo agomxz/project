@@ -8,9 +8,9 @@ from app.config import config
 # Initialize FastAPI app
 app = FastAPI(
     title=config.PROJECT_NAME,
-    root_path="/users",
-    summary="Users Service",
-    description=""" ## This service is for users managment """,
+    root_path="/transactions",
+    summary="Transactions Service",
+    description=""" ## This service is for transactions managment """,
 )
 
 app.include_router(api_router)
