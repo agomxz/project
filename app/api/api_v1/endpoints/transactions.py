@@ -52,6 +52,8 @@ async def upload_csv(
             new_obj = Transaction(date=new_date, amount=float(row[1]), type=type)
             list_transactions.append(new_obj)
 
+            pass
+
         return crud_transaction.create(db, list_transactions)
 
     except ValidationError as e:
